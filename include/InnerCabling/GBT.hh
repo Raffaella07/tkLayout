@@ -69,6 +69,7 @@ public:
   
 
   const int plotPowerChainColor() const { return plotPowerChainColor_; }
+  void resetNumELinks(const int newNumELinks);
 
 private:
   const int computePlotStyleGBTIndexInPowerChain(const int myGBTIndexInPowerChain, PowerChain* myPowerChain) const;
