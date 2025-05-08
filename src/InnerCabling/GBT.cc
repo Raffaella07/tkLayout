@@ -32,7 +32,11 @@ const int GBT::computePlotStyleGBTIndexInPowerChain(const int myGBTIndexInPowerC
  
   return myGBTIndexInPowerChainPlotStyle;
 }
+void GBT::resetNumELinks(const int newNumELinks){
+	
+	numELinksPerModule_ = newNumELinks;
 
+}
 
 /*
  * Compute GBT color on website.
