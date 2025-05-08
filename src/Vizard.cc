@@ -9207,7 +9207,8 @@ namespace insur {
   std::string Vizard::createInnerTrackerDTCsToModulesCsv(const InnerCablingMap* myInnerCablingMap) {
 
     std::stringstream dtcsToModulesCsv;
-    dtcsToModulesCsv << "IsPlusZEnd/O, IsPlusXSide/O, DTC_Id/I, DTC_CMSSW_Id/U, MFB/I, LpGBT_Id/C, LpGBT_CMSSW_IdPerDTC/U, N_ELinks_Per_Module/I, Power_Chain/I, Power_Chain_Type/C, Is_LongBarrel/O, Module_DetId/i, Module_Section/C, Module_Layer/I, Module_Ring/I, Module_phi_deg/D, N_Chips_Per_Module/I, N_Channels_Per_Module/I" << std::endl;
+    dtcsToModulesCsv << "IsPlusZEnd/O, IsPlusXSide/O, DTC_Id/I, DTC_CMSSW_Id/U, MFB/I, LpGBT_Id/C, LpGBT_CMSSW_IdPerDTC/U, Power_Chain/I, Power_Chain_Type/C, Is_LongBarrel/O, Module_DetId/i, Module_Section/C, Module_Layer/I, Module_Ring/I, Module_phi_deg/D, N_Chips_Per_Module/I, N_Channels_Per_Module/I, N_ELinks_Per_Module/I" << std::endl;
+//    dtcsToModulesCsv << "Module_DetId/i, Module_Section/C, Module_Layer/I, Module_Ring/I" << std::endl;
 
     const std::map<int, std::unique_ptr<InnerDTC> >& myDTCs = myInnerCablingMap->getDTCs();
     for (const auto& itDTC : myDTCs) {
@@ -9228,8 +9229,8 @@ namespace insur {
 	  for (const auto& myGBT : myGBTs) {
 	    std::stringstream GBTInfo;
 	    GBTInfo << any2str(myGBT->GBTId()) << ","
-		    << myGBT->getCMSSWId() << ","
-		    << myGBT->numELinksPerModule() << ",";
+		    << myGBT->getCMSSWId() << ",";
+	//	    << myGBT->numELinksPerModule() << ","; //remove number of ELinks per GBT and use the one per module (line 2952) - this was a workaround the issue solved via resetNumELinks, we can keep it or leave it as we wish
 
 	    const PowerChain* myPowerChain = myGBT->getPowerChain();
 	    if (myPowerChain != nullptr) {
@@ -9247,7 +9248,9 @@ namespace insur {
 			   << module->moduleRing() << ", "
 			   << module->center().Phi() * 180. / M_PI << ", "
 			   << module->outerSensor().totalROCs() << ", "
-			   << module->totalChannels();
+			   << module->totalChannels() << " , "
+			   << module->numELinks();
+//		dtcsToModulesCsv <<  moduleInfo.str() << std::endl;
 		dtcsToModulesCsv << DTCInfo.str() << bundleInfo.str() << GBTInfo.str() << powerChainInfo.str() << moduleInfo.str() << std::endl;
 	      }
 	      if (myModules.size() == 0) dtcsToModulesCsv << DTCInfo.str() << bundleInfo.str() << GBTInfo.str() << powerChainInfo.str() << std::endl;
