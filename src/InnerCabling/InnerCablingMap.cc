@@ -79,18 +79,23 @@ void InnerCablingMap::connectModulesToGBTs(std::map<int, std::unique_ptr<PowerCh
         for (auto& m: myPowerChain->modules()) {
             int ringRef = m->uniRef().ring;
             int phiRefInPowerChain = m->getPhiRefInPowerChain();
-            int numELinks = inner_cabling_functions::computeNumELinksPerModule(subDetectorName, ringRef); 
+            int numELinks = inner_cabling_functions::computeNumELinksPerModule(subDetectorName, ringRef);
+	    //exception for first module TEPX R2 connected to PC5, first lpGBT, see: https://docs.google.com/presentation/d/1Rk6C1_rYJYVQ-y0m6AUjZz7Nf4l_Zzdose1ejfIfhj0/edit?slide=id.gf48a9b49c3_0_0#slide=id.gf48a9b49c3_0_0
+	    if(ringRef==2 && subDetectorName=="FPIX_2" && phiRef==0 && phiRefInPowerChain==0){
+                numELinks-=1;
+            } 
             int gbtIndex = computeGBTIndexInSpecialPowerChain(ringRef, numELinks, phiRefInPowerChain, phiRef);
             const std::string myGBTId = computeGBTId(powerChainId, gbtIndex);
-            createAndStoreGBTs(myPowerChain, m, myGBTId, gbtIndex, numELinks, GBTs);
+	    //forces update of ELinks requested by each module - not sure if it's really needed
+            m->setNumELinks(numELinks);
+	    createAndStoreGBTs(myPowerChain, m, myGBTId, gbtIndex, numELinks, GBTs);
         }
      } else {
         // Loops on all modules of the power chain
         for (auto& m : myPowerChain->modules()) {
-
+	  
           // SET NUMBER OF ELINKS PER MODULE
           m->setNumELinks(numELinksPerModule);
-
           // COLLECT MODULE INFORMATION NEEDED TO BUILD GBT
           const int ringRef = (isLongBarrel ? m->uniRef().ring - 1 : m->uniRef().ring - 2);
           const int phiRefInPowerChain = m->getPhiRefInPowerChain();
@@ -236,7 +241,11 @@ void InnerCablingMap::createAndStoreGBTs(PowerChain* myPowerChain, Module* m, co
     GBTs.insert(std::make_pair(myGBTId, std::move(myGBT)));  
   }
   else {
+    //numELinksPerModule_ is an attribute of the class GBT initialized at creation (line 239) with the number of ELinks needed to connect the very first module.
+    // When an existing GBT is connected to a (2nd,3rd..) module, resetNumELinks resets numELinksPerModule_ in the GBT to exactly the ELinks needed to connect the new module 
+    found->second.get()->resetNumELinks(m->numELinks());  
     connectOneModuleToOneGBT(m, found->second.get());
+
   }
 }
 
@@ -427,12 +436,13 @@ const int InnerCablingMap::computeDTCId(const bool isPositiveZEnd, const bool is
   else if (subDetectorName == inner_cabling_tfpx) {
     if (layerDiskNumber == 1) myDTCId = 2;
     else if (layerDiskNumber == 2) myDTCId = 3;
-    else if (layerDiskNumber == 3) myDTCId = 4; //3;
-    else if (layerDiskNumber == 4) myDTCId = 5; //4;
-    else if (layerDiskNumber == 5) myDTCId = 5; //4;
-    else if (layerDiskNumber == 6) myDTCId = 6; //5;
-    else if (layerDiskNumber == 7) myDTCId = 7; //5;
-    else if (layerDiskNumber == 8) myDTCId = 8; //5;
+    // rearrangement of DTC assignement for rate redistribution
+    else if (layerDiskNumber == 3) myDTCId = 3;//4
+    else if (layerDiskNumber == 4) myDTCId = 4;//5
+    else if (layerDiskNumber == 5) myDTCId = 4;//5
+    else if (layerDiskNumber == 6) myDTCId = 5;//6
+    else if (layerDiskNumber == 7) myDTCId = 5;//7
+    else if (layerDiskNumber == 8) myDTCId = 5;//8
     else logERROR(any2str("Unexpected diskNumber in FPX : ") + any2str(layerDiskNumber));
   }
 
